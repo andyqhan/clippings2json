@@ -15,6 +15,7 @@ INPUT_LOC = args.input_location
 OUTPUT_LOC = args.output_location
 
 def convert():
+    out = []
     with open(INPUT_LOC, 'r') as clips:
         # my philosophy is to be very verbose with these things, since
         # performance is hardly ever a problem with such simple scripts 
@@ -26,10 +27,12 @@ def convert():
        locRegex = re.compile(r"Your Highlight on Location (\d+)")
        pageRegex = re.compile(r"Your Highlight on page (\d+)")
        pageAndLocRegex = re.compile(r"\| Location (\d+)")
+       dateRegex = re.compile(r"\| Added on (.*)")
+       textRegex = re.compile(r"\| Added on (.*)$\n\n(.*)\n")
 
        for quote in quotes:
            quote = quote.strip()
-           #print(quote)
+           print(quote)
 
            # find title and author
            byline = bylineRegex.match(quote)
@@ -60,7 +63,19 @@ def convert():
                    location = location_match.group(1)
            else:
                location = location_match.group(1)
-           
+
+           # find date
+           date_match = dateRegex.search(quote)
+           date = date_match.group(1)  # will let consumer app do date conversion. it's pretty sane rn
+
+           out.append({
+               "title": title,
+               "author": author,
+               "location": location,
+               "page": page,
+               "date": date
+           })
+       #pprint(out)
 
 if __name__ == '__main__':
     convert() 
