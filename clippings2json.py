@@ -3,6 +3,7 @@
 import argparse
 import os
 import re
+import json
 from pprint import pprint
 
 ap = argparse.ArgumentParser(description="""Convert a Kindle clippings file to a JSON.
@@ -28,11 +29,11 @@ def convert():
        pageRegex = re.compile(r"Your Highlight on page (\d+)")
        pageAndLocRegex = re.compile(r"\| Location (\d+)")
        dateRegex = re.compile(r"\| Added on (.*)")
-       textRegex = re.compile(r"\| Added on (.*)$\n\n(.*)\n")
+       textRegex = re.compile(r"\| Added on .*\n\n(.*)")
 
        for quote in quotes:
            quote = quote.strip()
-           print(quote)
+           # print(quote)
 
            # find title and author
            byline = bylineRegex.match(quote)
@@ -43,6 +44,9 @@ def convert():
            else:
                author = byline.group(2)[1:-1].strip()
            title = byline.group(1)
+           # get rid of the special character that's on some of the titles
+           if title[0] == u"\ufeff": 
+               title = title[1:]
            #print(title, author)
 
            # find location and (sometimes) page
@@ -68,14 +72,25 @@ def convert():
            date_match = dateRegex.search(quote)
            date = date_match.group(1)  # will let consumer app do date conversion. it's pretty sane rn
 
+           # find actual quote
+           text_match = textRegex.search(quote)
+           if not text_match:
+               print("Could not find quote for:", repr(quote))
+           text = text_match.group(1)
+           
            out.append({
                "title": title,
                "author": author,
                "location": location,
                "page": page,
-               "date": date
+               "date": date,
+               "quote": text
            })
-       #pprint(out)
+
+    with open(OUTPUT_LOC, 'w') as j:
+        json.dump(out, j, indent=1)
+
+    print(f"Processed {len(out)} quotes. Saved to JSON at {OUTPUT_LOC}.")
 
 if __name__ == '__main__':
     convert() 
